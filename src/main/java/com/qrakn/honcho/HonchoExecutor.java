@@ -1,7 +1,9 @@
 package com.qrakn.honcho;
 
+import com.qrakn.honcho.command.CommandMeta;
 import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import java.lang.reflect.InvocationTargetException;
@@ -14,18 +16,26 @@ import java.util.List;
 public class HonchoExecutor {
 
     private final Honcho honcho;
+    private final CommandMeta meta;
     private final CommandSender sender;
     private final Object command;
     private final String[] args;
 
     public HonchoExecutor(Honcho honcho, CommandSender sender, Object command, String[] args) {
         this.honcho = honcho;
+        this.meta = command.getClass().getAnnotation(CommandMeta.class);
         this.sender = sender;
         this.command = command;
         this.args = args;
     }
 
     public void execute() {
+
+        if (!(sender.hasPermission(meta.permission()))) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to execute this command.");
+            return;
+        }
+
         outer: for (Method method : command.getClass().getMethods()) {
 
             if (method.getParameterCount() - 1 > args.length) {

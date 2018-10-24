@@ -10,6 +10,5 @@ public @interface CommandMeta {
     String[] label();
     String permission() default "";
     String description() default "";
-    boolean allowConsoleExecution() default true;
 
 }

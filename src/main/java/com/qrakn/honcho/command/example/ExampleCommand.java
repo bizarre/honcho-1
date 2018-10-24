@@ -5,12 +5,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@CommandMeta(label = "example", permission = "honcho.example.command")
+@CommandMeta(label = "msg", permission = "honcho.example.command")
 public class ExampleCommand  {
-
-    public void execute(CommandSender sender) {
-        sender.sendMessage("This is an example command. :)");
-    }
 
     public void execute(CommandSender sender, Player player, String message) {
 
