@@ -9,20 +9,20 @@ import org.bukkit.command.CommandSender;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class HonchoExecutor {
 
     private final Honcho honcho;
+    private final String label;
     private final CommandMeta meta;
     private final CommandSender sender;
     private final Object command;
     private final String[] args;
 
-    public HonchoExecutor(Honcho honcho, CommandSender sender, Object command, String[] args) {
+    public HonchoExecutor(Honcho honcho, String label, CommandSender sender, Object command, String[] args) {
         this.honcho = honcho;
+        this.label = label;
         this.meta = command.getClass().getAnnotation(CommandMeta.class);
         this.sender = sender;
         this.command = command;
@@ -86,7 +86,35 @@ public class HonchoExecutor {
 
         }
 
-        sender.sendMessage("usage msg todo xd");
+        sender.sendMessage(getUsage());
+    }
+
+    //TODO: finish
+    private String getUsage() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(ChatColor.RED).append("Usage: /").append(label);
+
+        Map<Integer, List<String>> arguments = new HashMap<>();
+
+        for (Method method : command.getClass().getDeclaredMethods()) {
+            Parameter[] parameters = method.getParameters();
+            for (int i = 1; i < parameters.length; i++) {
+                List<String> argument = arguments.getOrDefault(i - 1, new ArrayList<>());
+
+                argument.add(parameters[i].getName());
+
+                arguments.put(i - 1, argument);
+            }
+        }
+
+        for (int i = 0; i < arguments.size(); i++) {
+            List<String> argument = arguments.get(i);
+
+            builder.append(" <").append(StringUtils.join(argument, "/")).append(">");
+        }
+
+        return builder.toString();
     }
 
 }

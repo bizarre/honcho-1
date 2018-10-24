@@ -49,7 +49,7 @@ public class Honcho implements Listener {
 
         if (command != null) {
             event.setCancelled(true);
-            new HonchoExecutor(this, event.getPlayer(), command, args).execute();
+            new HonchoExecutor(this, messageSplit[0].toLowerCase(), event.getPlayer(), command, args).execute();
         }
     }
 
