@@ -61,7 +61,7 @@ public class Honcho implements Listener {
             }
 
             event.setCancelled(true);
-            new HonchoExecutor(this, messageSplit[0].toLowerCase(), event.getPlayer(), command, args).execute();
+            new HonchoExecutor(this, label.toLowerCase(), event.getPlayer(), command, args).execute();
         }
     }
 
