@@ -5,6 +5,7 @@ import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
 import com.qrakn.honcho.command.adapter.impl.IntegerTypeAdapter;
 import com.qrakn.honcho.command.adapter.impl.PlayerTypeAdapter;
 import com.qrakn.honcho.command.adapter.impl.StringTypeAdapter;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,38 +38,30 @@ public class Honcho implements Listener {
     @EventHandler
     public void onPlayerCommandPreprocessEvent(PlayerCommandPreprocessEvent event) {
         String[] messageSplit = event.getMessage().substring(1).split(" ");
+        Object command = null;
+        String label = null;
 
-        String[] args = new String[0];
-        String previous = messageSplit[0];
-        String label = messageSplit[0];
-        Object command = commands.get(previous);
+        for (int remaining = messageSplit.length; remaining > 0; remaining--) {
+            label = StringUtils.join(messageSplit, " ", 0, remaining);
 
-        if (messageSplit.length > 1) {
-            args = new String[messageSplit.length - 1];
-            System.arraycopy(messageSplit,1, args,0,messageSplit.length - 1);
-        }
-
-        for (int i = 1; i < messageSplit.length; i++) {
-            Object match = commands.get(previous.toLowerCase() + " " + messageSplit[i].toLowerCase());
-            previous = previous.toLowerCase() + " " + messageSplit[i].toLowerCase();
-
-            if (match != null) {
-                command = match;
-                label = previous;
-
-                if (messageSplit.length - 1 > i) {
-                    args = new String[messageSplit.length - 1 - i];
-                    System.arraycopy(messageSplit, i+1, args, 0, messageSplit.length - 1 - i);
-                } else {
-                    args = new String[0];
-                }
+            if (commands.get(label.toLowerCase()) != null) {
+                command = commands.get(label.toLowerCase());
+                break;
             }
-
         }
 
         if (command != null) {
+            String[] labelSplit = label.split(" ");
+            String[] args = new String[0];
+
+            if (messageSplit.length != labelSplit.length) {
+                int numArgs = messageSplit.length - labelSplit.length;
+                args = new String[numArgs];
+                System.arraycopy(messageSplit, labelSplit.length, args,0, numArgs);
+            }
+
             event.setCancelled(true);
-            new HonchoExecutor(this, label, event.getPlayer(), command, args).execute();
+            new HonchoExecutor(this, messageSplit[0].toLowerCase(), event.getPlayer(), command, args).execute();
         }
     }
 
