@@ -1,21 +1,33 @@
 package com.qrakn.honcho.command.example;
 
 import com.qrakn.honcho.command.CommandMeta;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
-@CommandMeta(label = "msg", permission = "honcho.example.command")
+@CommandMeta(label = "honcho", permission = "honcho.example.command")
 public class ExampleCommand  {
 
-    public void execute(CommandSender sender, Player player, String message) {
+    public void execute(CommandSender sender) {
+        sender.sendMessage(ChatColor.RED + "pussy got that wet wet got that drip drip got that super soakers");
+    }
 
-        if (player == null) {
-            sender.sendMessage(ChatColor.RED + "Player not found with that name.");
-            return;
+    @CommandMeta(label = "help", permission = "honcho.example.subcommand")
+    public class HelpCommand extends ExampleCommand {
+
+        public void execute(CommandSender sender) {
+            sender.sendMessage(ChatColor.RED  + "honcho is the shit fam");
         }
 
-        player.sendMessage(ChatColor.GRAY + "(" + sender.getName() + " -> " + player.getName() + ") " + message);
+    }
+
+    @CommandMeta(label = "broadcast", permission = "honcho.example.subcommand")
+    public class BroadcastCommand extends ExampleCommand {
+
+        public void execute(CommandSender sender, String message) {
+            Bukkit.broadcastMessage(ChatColor.AQUA + message);
+        }
+
     }
 
 }

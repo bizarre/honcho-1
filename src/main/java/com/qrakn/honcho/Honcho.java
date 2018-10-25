@@ -10,12 +10,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 public class Honcho implements Listener {
 
@@ -39,17 +37,38 @@ public class Honcho implements Listener {
     @EventHandler
     public void onPlayerCommandPreprocessEvent(PlayerCommandPreprocessEvent event) {
         String[] messageSplit = event.getMessage().substring(1).split(" ");
-        Object command = commands.get(messageSplit[0].toLowerCase());
 
         String[] args = new String[0];
+        String previous = messageSplit[0];
+        String label = messageSplit[0];
+        Object command = commands.get(previous);
+
         if (messageSplit.length > 1) {
             args = new String[messageSplit.length - 1];
             System.arraycopy(messageSplit,1, args,0,messageSplit.length - 1);
         }
 
+        for (int i = 1; i < messageSplit.length; i++) {
+            Object match = commands.get(previous.toLowerCase() + " " + messageSplit[i].toLowerCase());
+            previous = previous.toLowerCase() + " " + messageSplit[i].toLowerCase();
+
+            if (match != null) {
+                command = match;
+                label = previous;
+
+                if (messageSplit.length - 1 > i) {
+                    args = new String[messageSplit.length - 1 - i];
+                    System.arraycopy(messageSplit, i+1, args, 0, messageSplit.length - 1 - i);
+                } else {
+                    args = new String[0];
+                }
+            }
+
+        }
+
         if (command != null) {
             event.setCancelled(true);
-            new HonchoExecutor(this, messageSplit[0].toLowerCase(), event.getPlayer(), command, args).execute();
+            new HonchoExecutor(this, label, event.getPlayer(), command, args).execute();
         }
     }
 
@@ -68,9 +87,53 @@ public class Honcho implements Listener {
             throw new RuntimeException(new ClassNotFoundException(object.getClass().getName() + " is missing CommandMeta annotation"));
         }
 
-        for (String label : meta.label()) {
+        for (String label : getLabels(object.getClass(), new ArrayList<>())) {
             commands.put(label.toLowerCase(), object);
         }
+
+        if (meta.autoAddSubCommands()) {
+            for (Class<?> clazz : object.getClass().getDeclaredClasses()) {
+                if (clazz.getSuperclass().equals(object.getClass())) {
+                    try {
+                        registerCommand(clazz.getDeclaredConstructor(object.getClass()).newInstance(object));
+                    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+    }
+
+    private List<String> getLabels(Class clazz, List<String> list) {
+        List<String> toReturn = new ArrayList<>();
+        Class superClass = clazz.getSuperclass();
+
+        if (superClass != null) {
+            CommandMeta meta = (CommandMeta) superClass.getAnnotation(CommandMeta.class);
+
+            if (meta != null) {
+                list = getLabels(superClass, list);
+            }
+        }
+
+        CommandMeta meta = (CommandMeta) clazz.getAnnotation(CommandMeta.class);
+
+        if (meta == null) {
+            return list;
+        }
+
+        if (list.isEmpty()) {
+            toReturn.addAll(Arrays.asList(meta.label()));
+        } else {
+            for (String prefix : list) {
+                for (String label : meta.label()) {
+                    toReturn.add(prefix + " " + label);
+                }
+            }
+        }
+
+        return toReturn;
     }
 
 }

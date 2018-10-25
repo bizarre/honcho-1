@@ -38,6 +38,10 @@ public class HonchoExecutor {
 
         outer: for (Method method : command.getClass().getMethods()) {
 
+            if (!(method.getDeclaringClass().equals(command.getClass()))) {
+                continue;
+            }
+
             if (method.getParameterCount() - 1 > args.length) {
                 continue;
             }
