@@ -14,6 +14,10 @@ public class ExampleCommand  {
         sender.sendMessage(ChatColor.RED + "pussy got that wet wet got that drip drip got that super soakers");
     }
 
+    public void execute(Player player) {
+        player.sendMessage(ChatColor.RED + player.getName() + " pussy nigga");
+    }
+
     @CommandMeta(label = "help", permission = "honcho.example.subcommand")
     public class HelpCommand extends ExampleCommand {
 

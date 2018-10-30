@@ -17,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -26,12 +27,14 @@ public class Honcho implements Listener {
     private final JavaPlugin plugin;
     private final Map<Class, CommandTypeAdapter> adapters;
     private final Map<String, Object> commands;
+    private final Map<Object, CommandMeta> metas;
 
     public Honcho(JavaPlugin plugin) {
         this.plugin = plugin;
 
         this.adapters = new HashMap<>();
         this.commands = new HashMap<>();
+        this.metas = new HashMap<>();
 
         registerTypeAdapter(Player.class, new PlayerTypeAdapter());
         registerTypeAdapter(String.class, new StringTypeAdapter());
@@ -59,6 +62,7 @@ public class Honcho implements Listener {
         }
 
         if (command != null) {
+            CommandMeta meta = metas.get(command);
             String[] labelSplit = label.split(" ");
             String[] args = new String[0];
 
@@ -69,7 +73,19 @@ public class Honcho implements Listener {
             }
 
             event.setCancelled(true);
-            new HonchoExecutor(this, label.toLowerCase(), event.getPlayer(), command, args).execute();
+
+            HonchoExecutor executor = new HonchoExecutor(this, label.toLowerCase(), event.getPlayer(), command, args);
+
+            if (meta.async()) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        executor.execute();
+                    }
+                }.runTaskAsynchronously(plugin);
+            } else {
+                executor.execute();
+            }
         }
     }
 
@@ -91,6 +107,8 @@ public class Honcho implements Listener {
         for (String label : getLabels(object.getClass(), new ArrayList<>())) {
             commands.put(label.toLowerCase(), object);
         }
+
+        metas.put(object, meta);
 
         if (meta.autoAddSubCommands()) {
             for (Class<?> clazz : object.getClass().getDeclaredClasses()) {

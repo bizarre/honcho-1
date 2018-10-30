@@ -5,6 +5,7 @@ import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,9 +47,14 @@ public class HonchoExecutor {
                 continue;
             }
 
-            if (args.length != method.getParameterCount() - 1) {
-                for (Method otherMethod : command.getClass().getMethods()) {
-                    if (!(otherMethod.equals(method))) {
+            for (Method otherMethod : command.getClass().getMethods()) {
+                if (!(otherMethod.equals(method))) {
+                    if (method.getParameterCount() == otherMethod.getParameterCount()) {
+                        if (method.getParameters()[0].getType().equals(CommandSender.class) && otherMethod.getParameters()[0].getType().equals(Player.class) && sender instanceof Player) {
+                            continue outer;
+                        }
+                    }
+                    if (args.length != method.getParameterCount() - 1) {
                         if (args.length - method.getParameterCount() > args.length - otherMethod.getParameterCount()) {
                             continue outer;
                         }
@@ -56,11 +62,15 @@ public class HonchoExecutor {
                 }
             }
 
-            if (method.getParameterCount() > 0 && method.getParameters()[0].getType().equals(CommandSender.class)) {
+            if (method.getParameterCount() > 0 && (method.getParameters()[0].getType().equals(CommandSender.class) || method.getParameters()[0].getType().equals(Player.class))) {
                 List<Object> arguments = new ArrayList<>();
                 Parameter[] parameters = method.getParameters();
 
                 arguments.add(sender);
+
+                if (method.getParameters()[0].getType().equals(Player.class) && !(sender instanceof Player)) {
+                    continue outer;
+                }
 
                 for (int i = 1; i < parameters.length; i++) {
                     Parameter parameter = parameters[i];

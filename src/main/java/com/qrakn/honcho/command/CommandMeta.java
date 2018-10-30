@@ -11,5 +11,6 @@ public @interface CommandMeta {
     String permission() default "";
     String description() default "";
     boolean autoAddSubCommands() default true;
+    boolean async() default false;
 
 }
