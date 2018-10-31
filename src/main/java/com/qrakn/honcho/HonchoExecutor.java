@@ -1,5 +1,6 @@
 package com.qrakn.honcho;
 
+import com.qrakn.honcho.command.CPL;
 import com.qrakn.honcho.command.CommandMeta;
 import com.qrakn.honcho.command.CommandOption;
 import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
@@ -20,7 +21,7 @@ public class HonchoExecutor {
     private final CommandMeta meta;
     private final CommandSender sender;
     private final Object command;
-    private final String[] args;
+    private String[] args;
 
     public HonchoExecutor(Honcho honcho, String label, CommandSender sender, Object command, String[] args) {
         this.honcho = honcho;
@@ -97,12 +98,17 @@ public class HonchoExecutor {
                         continue;
                     }
 
-
                     Object object;
                     if (i == (parameters.length - 1)) {
                         object = adapter.convert(StringUtils.join(args, " ", i-1, args.length), parameter.getType());
                     } else {
                         object = adapter.convert(args[i-1], parameter.getType());
+                    }
+
+                    if (parameter.getType().equals(CommandOption.class) && object == null) {
+                        List<String> replacement = new ArrayList<>(Arrays.asList(args));
+                        replacement.add(i-1, null);
+                        args = replacement.toArray(new String[0]);
                     }
 
                     if (object instanceof CommandOption) {
@@ -113,15 +119,18 @@ public class HonchoExecutor {
                         }
                     }
 
+                    arguments.add(object);
                 }
 
-                try {
-                    method.invoke(command, arguments.toArray());
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+                if (arguments.size() == parameters.length) {
+                    try {
+                        method.invoke(command, arguments.toArray());
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
 
-                return;
+                    return;
+                }
             }
 
         }
@@ -142,7 +151,7 @@ public class HonchoExecutor {
                 options.add("-" + option.toLowerCase());
             }
 
-            builder.append("[");
+            builder.append(" [");
             builder.append(StringUtils.join(options, ","));
             builder.append("]");
         }
@@ -153,8 +162,22 @@ public class HonchoExecutor {
             Parameter[] parameters = method.getParameters();
             for (int i = 1; i < parameters.length; i++) {
                 List<String> argument = arguments.getOrDefault(i - 1, new ArrayList<>());
+                Parameter parameter = parameters[i];
 
-                argument.add(parameters[i].getName());
+                if (parameter.getType().equals(CommandOption.class)) {
+                    arguments.put(i - 1, null);
+                    continue;
+                }
+
+                if (parameter.isAnnotationPresent(CPL.class)) {
+                    argument.add(parameter.getAnnotation(CPL.class).name().toLowerCase());
+                } else {
+                    String name = parameter.getName();
+
+                    if (!(argument.contains(name))) {
+                        argument.add(name);
+                    }
+                }
 
                 arguments.put(i - 1, argument);
             }
@@ -163,7 +186,9 @@ public class HonchoExecutor {
         for (int i = 0; i < arguments.size(); i++) {
             List<String> argument = arguments.get(i);
 
-            builder.append(" <").append(StringUtils.join(argument, "/")).append(">");
+            if (argument != null) {
+                builder.append(" <").append(StringUtils.join(argument, "/")).append(">");
+            }
         }
 
         return builder.toString();

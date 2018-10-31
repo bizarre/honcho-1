@@ -1,13 +1,9 @@
 package com.qrakn.honcho;
 
 import com.qrakn.honcho.command.CommandMeta;
+import com.qrakn.honcho.command.CommandOption;
 import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.BooleanTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.GameModeTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.NumberTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.PlayerTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.StringTypeAdapter;
-import com.qrakn.honcho.command.adapter.impl.WorldTypeAdapter;
+import com.qrakn.honcho.command.adapter.impl.*;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -42,6 +38,7 @@ public class Honcho implements Listener {
         registerTypeAdapter(Boolean.class, new BooleanTypeAdapter());
         registerTypeAdapter(World.class, new WorldTypeAdapter());
         registerTypeAdapter(GameMode.class, new GameModeTypeAdapter());
+        registerTypeAdapter(CommandOption.class, new CommandOptionTypeAdapter());
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
