@@ -8,6 +8,7 @@ import java.lang.annotation.*;
 public @interface CommandMeta {
 
     String[] label();
+    String[] options() default "";
     String permission() default "";
     String description() default "";
     boolean autoAddSubCommands() default true;

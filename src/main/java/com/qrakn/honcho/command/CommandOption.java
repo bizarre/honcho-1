@@ -2,12 +2,12 @@ package com.qrakn.honcho.command;
 
 import lombok.Getter;
 
-public class CommandTag {
+public class CommandOption {
 
     @Getter private final String tag;
 
-    public CommandTag(String tag) {
-        this.tag = tag;
+    public CommandOption(String tag) {
+        this.tag = tag.toLowerCase();
     }
 
 }

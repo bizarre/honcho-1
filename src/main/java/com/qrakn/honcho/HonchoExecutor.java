@@ -1,7 +1,7 @@
 package com.qrakn.honcho;
 
 import com.qrakn.honcho.command.CommandMeta;
-import com.qrakn.honcho.command.CommandTag;
+import com.qrakn.honcho.command.CommandOption;
 import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -48,7 +48,7 @@ public class HonchoExecutor {
 
                 boolean doContinue = true;
                 for (Parameter parameter : method.getParameters()) {
-                    if (parameter.getType().equals(CommandTag.class)) {
+                    if (parameter.getType().equals(CommandOption.class)) {
                         if (method.getParameterCount() - 2 <= args.length) {
                             doContinue = false;
                             break;
@@ -92,15 +92,27 @@ public class HonchoExecutor {
 
                     if (adapter == null) {
                         // TODO: throw error or log?
+
                         arguments.add(null);
                         continue;
                     }
 
+
+                    Object object;
                     if (i == (parameters.length - 1)) {
-                        arguments.add(adapter.convert(StringUtils.join(args, " ", i-1, args.length), parameter.getType()));
+                        object = adapter.convert(StringUtils.join(args, " ", i-1, args.length), parameter.getType());
                     } else {
-                        arguments.add(adapter.convert(args[i-1], parameter.getType()));
+                        object = adapter.convert(args[i-1], parameter.getType());
                     }
+
+                    if (object instanceof CommandOption) {
+                        CommandOption option = (CommandOption) object;
+                        if (!(Arrays.asList(meta.options())).contains(option.getTag().toLowerCase())) {
+                            sender.sendMessage(ChatColor.RED + "Unrecognized command option \"-" + option.getTag().toLowerCase() + "\"!");
+                            break outer;
+                        }
+                    }
+
                 }
 
                 try {
@@ -122,6 +134,18 @@ public class HonchoExecutor {
         StringBuilder builder = new StringBuilder();
 
         builder.append(ChatColor.RED).append("Usage: /").append(label);
+
+        if (meta.options().length > 0) {
+            List<String> options = new ArrayList<>();
+
+            for (String option : meta.options()) {
+                options.add("-" + option.toLowerCase());
+            }
+
+            builder.append("[");
+            builder.append(StringUtils.join(options, ","));
+            builder.append("]");
+        }
 
         Map<Integer, List<String>> arguments = new HashMap<>();
 
