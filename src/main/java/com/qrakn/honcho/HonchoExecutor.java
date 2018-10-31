@@ -1,6 +1,7 @@
 package com.qrakn.honcho;
 
 import com.qrakn.honcho.command.CommandMeta;
+import com.qrakn.honcho.command.CommandTag;
 import com.qrakn.honcho.command.adapter.CommandTypeAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -44,7 +45,20 @@ public class HonchoExecutor {
             }
 
             if (method.getParameterCount() - 1 > args.length) {
-                continue;
+
+                boolean doContinue = true;
+                for (Parameter parameter : method.getParameters()) {
+                    if (parameter.getType().equals(CommandTag.class)) {
+                        if (method.getParameterCount() - 2 <= args.length) {
+                            doContinue = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (doContinue) {
+                    continue;
+                }
             }
 
             for (Method otherMethod : command.getClass().getMethods()) {
