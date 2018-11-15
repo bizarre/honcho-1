@@ -33,10 +33,11 @@ public class HonchoExecutor {
     }
 
     public void execute() {
-
-        if (!(sender.hasPermission(meta.permission()))) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to execute this command.");
-            return;
+        if (!meta.permission().equalsIgnoreCase("")) {
+            if (!(sender.hasPermission(meta.permission()))) {
+                sender.sendMessage(ChatColor.RED + "You do not have permission to execute this command.");
+                return;
+            }
         }
 
         outer: for (Method method : command.getClass().getMethods()) {

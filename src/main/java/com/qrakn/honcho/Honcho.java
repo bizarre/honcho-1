@@ -8,10 +8,13 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -35,7 +38,12 @@ public class Honcho implements Listener {
         registerTypeAdapter(Player.class, new PlayerTypeAdapter());
         registerTypeAdapter(String.class, new StringTypeAdapter());
         registerTypeAdapter(Number.class, new NumberTypeAdapter());
+        registerTypeAdapter(int.class, new NumberTypeAdapter());
+        registerTypeAdapter(long.class, new NumberTypeAdapter());
+        registerTypeAdapter(double.class, new NumberTypeAdapter());
+        registerTypeAdapter(float.class, new NumberTypeAdapter());
         registerTypeAdapter(Boolean.class, new BooleanTypeAdapter());
+        registerTypeAdapter(boolean.class, new BooleanTypeAdapter());
         registerTypeAdapter(World.class, new WorldTypeAdapter());
         registerTypeAdapter(GameMode.class, new GameModeTypeAdapter());
         registerTypeAdapter(CommandOption.class, new CommandOptionTypeAdapter());
@@ -44,8 +52,17 @@ public class Honcho implements Listener {
     }
 
     @EventHandler
+    public void onServerCommandEvent(ServerCommandEvent event) {
+        handle(event.getSender(), "/" + event.getCommand(), event);
+    }
+
+    @EventHandler
     public void onPlayerCommandPreprocessEvent(PlayerCommandPreprocessEvent event) {
-        String[] messageSplit = event.getMessage().substring(1).split(" ");
+        handle(event.getPlayer(), event.getMessage(), event);
+    }
+
+    private void handle(CommandSender commandSender, String message, Cancellable cancellable) {
+        String[] messageSplit = message.substring(1).split(" ");
         Object command = null;
         String label = null;
 
@@ -69,9 +86,9 @@ public class Honcho implements Listener {
                 System.arraycopy(messageSplit, labelSplit.length, args,0, numArgs);
             }
 
-            event.setCancelled(true);
+            cancellable.setCancelled(true);
 
-            HonchoExecutor executor = new HonchoExecutor(this, label.toLowerCase(), event.getPlayer(), command, args);
+            HonchoExecutor executor = new HonchoExecutor(this, label.toLowerCase(), commandSender, command, args);
 
             if (meta.async()) {
                 new BukkitRunnable() {
