@@ -170,7 +170,7 @@ public class HonchoExecutor {
                 }
 
                 if (parameter.isAnnotationPresent(CPL.class)) {
-                    argument.add(parameter.getAnnotation(CPL.class).name().toLowerCase());
+                    argument.add(parameter.getAnnotation(CPL.class).value().toLowerCase());
                 } else {
                     String name = parameter.getName();
 
